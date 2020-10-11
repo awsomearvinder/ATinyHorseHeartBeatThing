@@ -90,10 +90,10 @@ impl Window {
         }
     }
     pub fn set_level(&self, level: Level) -> Result<(), crate::WinApiError> {
-        let window_pos = self.get_window_pos();
+        let window_pos = self.get_window_pos()?;
         unsafe {
-            if !winuser::SetWindowPos(self.hwnd, level.into(), window_pos.x, window_pos.y, window_pos.cx, window_pos.cy, 0) {
-                return Err(WinApiError::FailedToSetWindowPos(window_pos.x, window_pos.y, window_pos.cx, window_pos.cy, level.into()))
+            if winuser::SetWindowPos(self.hwnd, level.into(), window_pos.x, window_pos.y, window_pos.cx, window_pos.cy, 0) != 0{
+                return Err(crate::WinApiError::FailedToSetWindowPos(window_pos.x, window_pos.y, window_pos.cx, window_pos.cy, level.into()))
             }
         }
         Ok(())
@@ -106,7 +106,7 @@ impl Window {
             bottom: 0,
         };
         unsafe {
-            if !winuser::GetWindowRect( self.hwnd, &mut rect as *mut winapi::shared::windef::RECT) {
+            if !winuser::GetWindowRect( self.hwnd, &mut rect as *mut winapi::shared::windef::RECT) != 0{
                 return Err(crate::WinApiError::FailedToGetWindowPos);
             }
         }
