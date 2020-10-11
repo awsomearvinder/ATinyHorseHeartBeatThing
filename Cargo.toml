@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "heart_beat",
+    "winapi_wrapper"
+]
