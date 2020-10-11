@@ -1,5 +1,5 @@
 use winapi::um::winuser::{self, CS_HREDRAW, CS_OWNDC, CS_VREDRAW};
-use winapi::ctypes::{c_int, c_long};
+use winapi::ctypes::{c_int};
 use winapi::shared::windef::HWND;
 
 use std::ffi::OsStr;
@@ -92,12 +92,13 @@ impl Window {
     pub fn set_level(&self, level: Level) -> Result<(), crate::WinApiError> {
         let window_pos = self.get_window_pos()?;
         unsafe {
-            if winuser::SetWindowPos(self.hwnd, level.into(), window_pos.x, window_pos.y, window_pos.cx, window_pos.cy, 0) != 0{
+            if winuser::SetWindowPos(self.hwnd, level.into(), window_pos.x, window_pos.y, window_pos.cx, window_pos.cy, 0) == 0{
                 return Err(crate::WinApiError::FailedToSetWindowPos(window_pos.x, window_pos.y, window_pos.cx, window_pos.cy, level.into()))
             }
         }
         Ok(())
     }
+
     pub fn get_window_pos(&self) -> Result<WindowPos, crate::WinApiError> {
         let mut rect = winapi::shared::windef::RECT {
             left: 0,
@@ -106,7 +107,7 @@ impl Window {
             bottom: 0,
         };
         unsafe {
-            if !winuser::GetWindowRect( self.hwnd, &mut rect as *mut winapi::shared::windef::RECT) != 0{
+            if winuser::GetWindowRect( self.hwnd, &mut rect as *mut winapi::shared::windef::RECT) == 0 {
                 return Err(crate::WinApiError::FailedToGetWindowPos);
             }
         }
