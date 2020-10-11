@@ -1,5 +1,7 @@
 use std::{error::Error, fmt::Display};
 use winapi::ctypes::c_int;
+
+#[derive(Debug, Eq, PartialEq)]
 pub enum WinApiError {
     FailedToSetWindowPos(c_int, c_int, c_int, c_int, crate::window::Level),
     FailedToGetWindowPos,
@@ -13,3 +15,5 @@ impl Display for WinApiError {
         }
     }
 }
+
+impl Error for WinApiError {}
