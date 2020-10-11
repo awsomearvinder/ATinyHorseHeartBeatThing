@@ -1,6 +1,6 @@
-use winapi::um::winuser::{self, CS_HREDRAW, CS_OWNDC, CS_VREDRAW};
-use winapi::ctypes::{c_int};
+use winapi::ctypes::c_int;
 use winapi::shared::windef::HWND;
+use winapi::um::winuser::{self, CS_HREDRAW, CS_OWNDC, CS_VREDRAW};
 
 use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
@@ -43,13 +43,18 @@ pub enum Level {
 }
 
 impl Window {
-    pub fn new(name: &str, size_x: c_int, size_y: c_int, pos_x: c_int, pos_y: c_int, ) -> Self {
+    pub fn new(
+        name: &str,
+        size_x: c_int,
+        size_y: c_int,
+        pos_x: c_int,
+        pos_y: c_int,
+    ) -> Result<Self, crate::WinApiError> {
         let name = win32_string(name);
         unsafe {
             //This is going to be a pointer handed by windows, should be valid as long as the program is.
             //It represents a handle to the current program.
-            let hinstance =
-                winapi::um::libloaderapi::GetModuleHandleW(ZERO as *const u16);
+            let hinstance = winapi::um::libloaderapi::GetModuleHandleW(ZERO as *const u16);
             let wnd_class = winapi::um::winuser::WNDCLASSW {
                 style: CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
                 lpfnWndProc: Some(winuser::DefWindowProcW),
@@ -84,16 +89,52 @@ impl Window {
                 let last_err = winapi::um::errhandlingapi::GetLastError();
                 panic!("Got a null handle. error num: {}", last_err);
             }
-            Self {
-                hwnd: handle
-            }
+            if winuser::SetWindowLongW(handle, winuser::GWL_EXSTYLE, winuser::WS_EX_LAYERED as i32)
+                == 0
+            {
+                return Err(crate::WinApiError::FailedToSetExtendedWinStyle);
+            };
+            Ok(Self { hwnd: handle })
+        }
+    }
+    pub fn remove_window_styling(&self) -> Result<(), crate::WinApiError> {
+        unsafe {
+            if winuser::SetWindowLongW(self.hwnd, winuser::GWL_STYLE, 0) == 0 {
+                return Err(crate::WinApiError::FailedToSetGWL_Style);
+            };
+            Ok(())
         }
     }
     pub fn set_level(&self, level: Level) -> Result<(), crate::WinApiError> {
         let window_pos = self.get_window_pos()?;
         unsafe {
-            if winuser::SetWindowPos(self.hwnd, level.into(), window_pos.x, window_pos.y, window_pos.cx, window_pos.cy, 0) == 0{
-                return Err(crate::WinApiError::FailedToSetWindowPos(window_pos.x, window_pos.y, window_pos.cx, window_pos.cy, level.into()))
+            if winuser::SetWindowPos(
+                self.hwnd,
+                level.into(),
+                window_pos.x,
+                window_pos.y,
+                window_pos.cx,
+                window_pos.cy,
+                0,
+            ) == 0
+            {
+                return Err(crate::WinApiError::FailedToSetWindowPos(
+                    window_pos.x,
+                    window_pos.y,
+                    window_pos.cx,
+                    window_pos.cy,
+                    level.into(),
+                ));
+            }
+        }
+        Ok(())
+    }
+    
+    pub fn set_window_color(&self, color: crate::util::RGBA) -> Result<(), crate::WinApiError> {
+        unsafe {
+            let (rgb, alpha) = color.into();
+            if winuser::SetLayeredWindowAttributes(self.hwnd, rgb, alpha, 1) == 0 {
+                return Err(crate::WinApiError::CouldntSetBgColor);
             }
         }
         Ok(())
@@ -107,7 +148,9 @@ impl Window {
             bottom: 0,
         };
         unsafe {
-            if winuser::GetWindowRect( self.hwnd, &mut rect as *mut winapi::shared::windef::RECT) == 0 {
+            if winuser::GetWindowRect(self.hwnd, &mut rect as *mut winapi::shared::windef::RECT)
+                == 0
+            {
                 return Err(crate::WinApiError::FailedToGetWindowPos);
             }
         }
@@ -115,7 +158,7 @@ impl Window {
             x: rect.left,
             y: rect.top,
             cx: rect.right - rect.left,
-            cy: rect.bottom - rect.top
+            cy: rect.bottom - rect.top,
         })
     }
 }
