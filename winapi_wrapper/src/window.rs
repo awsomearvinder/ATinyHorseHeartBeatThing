@@ -7,6 +7,7 @@ use std::os::windows::ffi::OsStrExt;
 
 const ZERO: u16 = 0;
 ///A handle to a window.
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Window {
     hwnd: HWND,
 }
@@ -21,6 +22,7 @@ impl From<Level> for HWND {
     }
 }
 ///Represents a Window Position.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct WindowPos {
     x: c_int,
     y: c_int,
@@ -28,6 +30,7 @@ pub struct WindowPos {
     cy: c_int,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Level {
     ///This window will *always* remain at the top, unless otherwise specified.
     TopMost,
