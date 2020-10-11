@@ -73,7 +73,7 @@ impl Window {
             let handle = winuser::CreateWindowExW(
                 0,
                 name.as_ptr(),
-                std::ptr::null_mut(),
+                name.as_ptr(),
                 winuser::WS_VISIBLE,
                 pos_x,
                 pos_y,
@@ -99,7 +99,7 @@ impl Window {
     }
     pub fn remove_window_styling(&self) -> Result<(), crate::WinApiError> {
         unsafe {
-            if winuser::SetWindowLongW(self.hwnd, winuser::GWL_STYLE, 0) == 0 {
+            if winuser::SetWindowLongW(self.hwnd, winuser::GWL_STYLE, 0 | winuser::WS_VISIBLE as i32) == 0 {
                 return Err(crate::WinApiError::FailedToSetGWL_Style);
             };
             Ok(())
